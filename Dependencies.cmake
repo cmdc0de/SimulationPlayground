@@ -40,4 +40,8 @@ function(SimulationPlayground_setup_dependencies)
     cpmaddpackage("gh:lefticus/tools#update_build_system")
   endif()
 
+  if(NOT TARGET glm::glm)
+    cpmaddpackage("gh:g-truc/glm#bf71a83")
+  endif()
+
 endfunction()

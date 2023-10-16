@@ -1,12 +1,12 @@
-add_executable(intro main.cpp)
+add_executable(sim-p main.cpp)
 
 target_link_libraries(
-  intro
+  sim-p
   PRIVATE SimulationPlayground::SimulationPlayground_options
           SimulationPlayground::SimulationPlayground_warnings)
 
 target_link_system_libraries(
-  intro
+  sim-p
   PRIVATE
           CLI11::CLI11
           fmt::fmt
@@ -14,6 +14,7 @@ target_link_system_libraries(
           lefticus::tools
           ftxui::screen
           ftxui::dom
-          ftxui::component)
+          ftxui::component
+          glm::glm)
 
-target_include_directories(intro PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
+target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
