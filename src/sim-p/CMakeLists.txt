@@ -15,6 +15,8 @@ target_link_system_libraries(
           ftxui::screen
           ftxui::dom
           ftxui::component
-          glm::glm)
+	  Vulkan::Headers
+          glm::glm
+	  glfw)
 
 target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")

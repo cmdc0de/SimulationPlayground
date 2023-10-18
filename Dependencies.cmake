@@ -40,8 +40,20 @@ function(SimulationPlayground_setup_dependencies)
     cpmaddpackage("gh:lefticus/tools#update_build_system")
   endif()
 
+  #  if(NOT TARGET vulkan::hpp-headers)
+  #  cpmaddpackage("gh:KhronosGroup/Vulkan-Hpp@1.3.268")
+  #endif()
+
+  if(NOT TARGET Vulkan::Headers)
+     cpmaddpackage("gh:KhronosGroup/Vulkan-Headers@1.3.268")
+  endif()
+
   if(NOT TARGET glm::glm)
     cpmaddpackage("gh:g-truc/glm#bf71a83")
+  endif()
+
+  if(NOT TARGET glfw)
+    cpmaddpackage("gh:glfw/glfw#7482de6")
   endif()
 
 endfunction()
