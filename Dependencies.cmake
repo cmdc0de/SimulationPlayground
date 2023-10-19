@@ -48,6 +48,15 @@ function(SimulationPlayground_setup_dependencies)
      cpmaddpackage("gh:KhronosGroup/Vulkan-Headers@1.3.268")
   endif()
 
+  if(NOT TARGET vulkan)
+     cpmaddpackage(
+	NAME vulkan
+	GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Loader"
+	GIT_TAG "v1.3.268"
+	OPTIONS
+	"UPDATE_DEPS ON BUILD_STATIC_LOADER")
+  endif()
+
   if(NOT TARGET glm::glm)
     cpmaddpackage("gh:g-truc/glm#bf71a83")
   endif()

@@ -16,6 +16,7 @@ target_link_system_libraries(
           ftxui::dom
           ftxui::component
 	  Vulkan::Headers
+	  vulkan
           glm::glm
 	  glfw)
 
