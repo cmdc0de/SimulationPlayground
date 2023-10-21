@@ -65,4 +65,12 @@ function(SimulationPlayground_setup_dependencies)
     cpmaddpackage("gh:glfw/glfw#7482de6")
   endif()
 
+  if (NOT TARGET spirv)
+    cpmaddpackage(
+	    NAME spirv
+	    GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross"
+	    GIT_TAG "sdk-1.3.261.1"
+	    )
+  endif()
+
 endfunction()
