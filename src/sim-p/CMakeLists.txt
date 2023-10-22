@@ -1,4 +1,5 @@
-add_executable(sim-p main.cpp)
+add_executable(sim-p main.cpp 
+	app.cpp)
 
 target_link_libraries(
   sim-p
