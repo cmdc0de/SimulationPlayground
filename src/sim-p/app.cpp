@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <cstring>
+#include <map>
 
 const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
@@ -44,13 +45,14 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 
 
-App::App(): window(nullptr), instance(0) {
+App::App(): window(nullptr), instance(0), debugMessenger(), physicalDevice(VK_NULL_HANDLE) {
 
 }
 
 void App::initVulkan() {
 	createInstance();
 	setupDebugMessenger();
+	pickPhysicalDevice();
 }
 
 void App::createInstance() {
@@ -210,5 +212,123 @@ bool App::checkValidationLayerSupport() {
 	return true;
 }
 
+void App::logFeatures(VkPhysicalDeviceFeatures &f) {
+	printf("feature List: \nrobustBufferAccess: %d\n", f.robustBufferAccess);
+	printf("fullDrawIndexUint32: %d\n", f.fullDrawIndexUint32);
+   printf("imageCubeArray: %d\n", f.imageCubeArray);
+   printf("indetendentBlend: %d\n", f.independentBlend);
+   printf("geometryShader: %d\n", f.geometryShader);
+   printf("tessellationShader: %d\n", f.tessellationShader);
+   printf("sampleRateShading: %d\n", f.sampleRateShading);
+   printf("dualSrcBlend: %d\n", f.dualSrcBlend);
+   printf("logicOp: %d\n", f.logicOp);
+   printf("multiDrawIndirect: %d\n", f.multiDrawIndirect);
+   printf("drawIndirectFirstInstance: %d\n", f.drawIndirectFirstInstance);
+   printf("depthClamp: %d\n", f.depthClamp);
+   printf("depthBiasClamp: %d\n", f.depthBiasClamp);
+   printf("fillModeNonSolid: %d\n", f.fillModeNonSolid);
+   printf("depthBounds: %d\n", f.depthBounds);
+   printf("wideLines: %d\n", f.wideLines);
+   printf("largePoints: %d\n", f.largePoints);
+   printf("alphaToOne: %d\n", f.alphaToOne);
+   printf("multiViewport: %d\n", f.multiViewport);
+   printf("samplerAnisotropy: %d\n", f.samplerAnisotropy);
+   printf("textureCompressionETC2: %d\n", f.textureCompressionETC2);
+   printf("textureCompressionASTC_LDR: %d\n", f.textureCompressionASTC_LDR);
+   printf("textureCompressionBC: %d\n", f.textureCompressionBC);
+   printf("occlusionQueryPrecise; %d\n", f.occlusionQueryPrecise);
+   printf("pipelineStatisticsQuery; %d\n", f.pipelineStatisticsQuery);
+   printf("vertexPipelineStoresAndAtomics; %d\n", f.vertexPipelineStoresAndAtomics);
+   printf("fragmentStoresAndAtomics; %d\n", f.fragmentStoresAndAtomics);
+   printf("shaderTessellationAndGeometryPointSize; %d\n", f.shaderTessellationAndGeometryPointSize);
+   printf("shaderImageGatherExtended; %d\n", f.shaderImageGatherExtended);
+   printf("shaderStorageImageExtendedFormats; %d\n", f.shaderStorageImageExtendedFormats);
+   printf("shaderStorageImageMultisample; %d\n", f.shaderStorageImageMultisample);
+   printf("shaderStorageImageReadWithoutFormat; %d\n", f.shaderStorageImageReadWithoutFormat);
+   printf("shaderStorageImageWriteWithoutFormat; %d\n", f.shaderStorageImageWriteWithoutFormat);
+   printf("shaderUniformBufferArrayDynamicIndexing; %d\n", f.shaderUniformBufferArrayDynamicIndexing);
+   printf("shaderSampledImageArrayDynamicIndexing; %d\n", f.shaderSampledImageArrayDynamicIndexing);
+   printf("shaderStorageBufferArrayDynamicIndexing; %d\n", f.shaderStorageBufferArrayDynamicIndexing);
+   printf("shaderStorageImageArrayDynamicIndexing; %d\n", f.shaderStorageImageArrayDynamicIndexing);
+   printf("shaderClipDistance; %d\n", f.shaderClipDistance);
+   printf("shaderCullDistance; %d\n", f.shaderCullDistance);
+   printf("shaderFloat64; %d\n", f.shaderFloat64);
+   printf("shaderInt64; %d\n", f.shaderInt64);
+   printf("shaderInt16; %d\n", f.shaderInt16);
+   printf("shaderResourceResidency; %d\n", f.shaderResourceResidency);
+   printf("shaderResourceMinLod; %d\n", f.shaderResourceMinLod);
+   printf("sparseBinding; %d\n", f.sparseBinding);
+   printf("sparseResidencyBuffer; %d\n", f.sparseResidencyBuffer);
+   printf("sparseResidencyImage2D; %d\n", f.sparseResidencyImage2D);
+   printf("sparseResidencyImage3D; %d\n", f.sparseResidencyImage3D);
+   printf("sparseResidency2Samples; %d\n", f.sparseResidency2Samples);
+   printf("sparseResidency4Samples; %d\n", f.sparseResidency4Samples);
+   printf("sparseResidency8Samples; %d\n", f.sparseResidency8Samples);
+   printf("sparseResidency16Samples; %d\n", f.sparseResidency16Samples);
+   printf("sparseResidencyAliased; %d\n", f.sparseResidencyAliased);
+   printf("variableMultisampleRate; %d\n", f.variableMultisampleRate);
+   printf("inheritedQueries; %d\n", f.inheritedQueries);
+}
+
+bool App::isDeviceSuitable(const VkPhysicalDevice &device) {
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+	logFeatures(deviceFeatures);
+
+	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;// && deviceFeatures.geometryShader;
+}
+
+void App::pickPhysicalDevice() {
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	if (deviceCount == 0) {
+		throw std::runtime_error("failed to find GPUs with Vulkan support!");
+	}
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+	std::multimap<int, VkPhysicalDevice> candidates;
+
+	for (const auto& device : devices) {
+		if (isDeviceSuitable(device)) {
+			uint32_t score = rateDevice(device);
+			candidates.insert(std::make_pair(score, device));
+			break;
+		}
+	}
+
+	// Check if the best candidate is suitable at all
+	if (candidates.rbegin()->first > 0) {
+		physicalDevice = candidates.rbegin()->second;
+	} else {
+		throw std::runtime_error("failed to find a suitable GPU!");
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE) {
+		throw std::runtime_error("failed to find a suitable GPU!");
+	}
+}
+
+uint32_t App::rateDevice(const VkPhysicalDevice &device) {
+	uint32_t score = 0;
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	// Discrete GPUs have a significant performance advantage
+	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+		score += 1000;
+	}
+
+	// Maximum possible size of textures affects graphics quality
+	score += deviceProperties.limits.maxImageDimension2D;
+
+	// Application can't function without geometry shaders
+	if (!deviceFeatures.geometryShader) {
+		return 0;
+	}
+	return score;
+}
 
 

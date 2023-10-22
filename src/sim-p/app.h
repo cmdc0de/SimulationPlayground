@@ -18,8 +18,13 @@ protected:
 	void getRequiredExtensions(std::vector<const char*> &extensions);
 	bool checkValidationLayerSupport();
 	void getAllExtensions(std::vector<VkExtensionProperties> &allExtensions);
+	void logFeatures(VkPhysicalDeviceFeatures &f);
+	bool isDeviceSuitable(const VkPhysicalDevice &device);
+	void pickPhysicalDevice();
+	uint32_t rateDevice(const VkPhysicalDevice &device);
 private:
     GLFWwindow* window;
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
+	 VkPhysicalDevice physicalDevice;
 };
