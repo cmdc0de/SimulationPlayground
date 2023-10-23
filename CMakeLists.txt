@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
 
+#set (CMAKE_BUILD_TYPE "RelWithDebInfo")
+set (CMAKE_BUILD_TYPE "Debug")
+
+message (${CMAKE_BUILD_TYPE})
+
 # This template attempts to be "fetch_content"-able
 # so that it works well with tools like CPM or other
 # manual dependency management

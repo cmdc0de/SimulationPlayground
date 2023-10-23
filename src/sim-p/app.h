@@ -13,6 +13,12 @@ struct QueueFamilyIndices {
 	}
 };
 
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 class App {
 public:
 	App();
@@ -35,6 +41,12 @@ protected:
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	void createLogicalDevice();
 	void createSurface();
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+	void querySwapChainSupport(VkPhysicalDevice device, SwapChainSupportDetails &scsd);
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	void createSwapChain();
 private:
     GLFWwindow* Window;
     VkInstance Instance;
@@ -44,4 +56,8 @@ private:
 	 VkQueue GraphicsQueue;
 	 VkSurfaceKHR Surface;
 	 VkQueue PresentQueue;
+	 VkSwapchainKHR SwapChain;
+	 std::vector<VkImage> SwapChainImages;
+	 VkFormat SwapChainImageFormat;
+    VkExtent2D SwapChainExtent;
 };
