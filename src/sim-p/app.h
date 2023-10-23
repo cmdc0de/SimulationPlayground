@@ -48,6 +48,8 @@ protected:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void createSwapChain();
 	void createImageViews();
+	void createGraphicsPipeline();
+	VkShaderModule createShaderModule(const std::vector<char>& code);
 private:
     GLFWwindow* Window;
     VkInstance Instance;
@@ -62,4 +64,5 @@ private:
 	 VkFormat SwapChainImageFormat;
     VkExtent2D SwapChainExtent;
 	 std::vector<VkImageView> SwapChainImageViews;
+	 VkPipelineLayout PipelineLayout;
 };
