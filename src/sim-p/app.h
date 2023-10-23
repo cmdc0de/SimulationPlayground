@@ -47,10 +47,11 @@ protected:
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void createSwapChain();
+	void createImageViews();
 private:
     GLFWwindow* Window;
     VkInstance Instance;
-    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerEXT DebugMessenger;
 	 VkPhysicalDevice PhysicalDevice;
 	 VkDevice SelectedDevice;
 	 VkQueue GraphicsQueue;
@@ -60,4 +61,5 @@ private:
 	 std::vector<VkImage> SwapChainImages;
 	 VkFormat SwapChainImageFormat;
     VkExtent2D SwapChainExtent;
+	 std::vector<VkImageView> SwapChainImageViews;
 };

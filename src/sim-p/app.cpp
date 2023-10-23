@@ -54,9 +54,9 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 
 
-App::App(): Window(nullptr), Instance(0), debugMessenger(), PhysicalDevice(VK_NULL_HANDLE), SelectedDevice(0)
+App::App(): Window(nullptr), Instance(0), DebugMessenger(0), PhysicalDevice(VK_NULL_HANDLE), SelectedDevice(0)
 	, GraphicsQueue(0), Surface(0), PresentQueue(0), SwapChain(0), SwapChainImages(), SwapChainImageFormat()
-	, SwapChainExtent() {
+	, SwapChainExtent(), SwapChainImageViews() {
 
 }
 
@@ -67,6 +67,32 @@ void App::initVulkan() {
 	pickPhysicalDevice();
 	createLogicalDevice();
 	createSwapChain();
+	createImageViews();
+}
+
+void App::createImageViews() {
+	SwapChainImageViews.resize(SwapChainImages.size());
+
+	for (size_t i = 0; i < SwapChainImages.size(); i++) {
+		VkImageViewCreateInfo createInfo{};
+      createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+      createInfo.image = SwapChainImages[i];
+      createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+      createInfo.format = SwapChainImageFormat;
+      createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+      createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+      createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+      createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+      createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      createInfo.subresourceRange.baseMipLevel = 0;
+      createInfo.subresourceRange.levelCount = 1;
+      createInfo.subresourceRange.baseArrayLayer = 0;
+      createInfo.subresourceRange.layerCount = 1;
+
+      if (vkCreateImageView(SelectedDevice, &createInfo, nullptr, &SwapChainImageViews[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create image views!");
+		}
+	}
 }
 
 void App::createSwapChain() {
@@ -229,10 +255,13 @@ void App::mainLoop() {
 
 
 void App::cleanUp() {
+	for (auto imageView : SwapChainImageViews) {
+		vkDestroyImageView(SelectedDevice, imageView, nullptr);
+	}
 	vkDestroySwapchainKHR(SelectedDevice, SwapChain, nullptr);
 	vkDestroyDevice(SelectedDevice, nullptr);
 	if (enableValidationLayers) {
-		DestroyDebugUtilsMessengerEXT(Instance, debugMessenger, nullptr);
+		DestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
 	}
 	vkDestroySurfaceKHR(Instance, Surface, nullptr);
 	vkDestroyInstance(Instance, nullptr);
@@ -256,7 +285,7 @@ void App::setupDebugMessenger() {
 	VkDebugUtilsMessengerCreateInfoEXT createInfo;
 	populateDebugMessengerCreateInfo(createInfo);
 
-	if (CreateDebugUtilsMessengerEXT(Instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+	if (CreateDebugUtilsMessengerEXT(Instance, &createInfo, nullptr, &DebugMessenger) != VK_SUCCESS) {
 		throw std::runtime_error("failed to set up debug messenger!");
 	}
 }
