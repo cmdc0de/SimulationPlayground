@@ -49,7 +49,12 @@ protected:
 	void createSwapChain();
 	void createImageViews();
 	void createGraphicsPipeline();
+	void createRenderPass();
 	VkShaderModule createShaderModule(const std::vector<char>& code);
+	void createFrameBuffers();
+	void createCommandBuffer();
+	void createCommandPool();
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 private:
     GLFWwindow* Window;
     VkInstance Instance;
@@ -65,4 +70,9 @@ private:
     VkExtent2D SwapChainExtent;
 	 std::vector<VkImageView> SwapChainImageViews;
 	 VkPipelineLayout PipelineLayout;
+	 VkRenderPass RenderPass;
+	 VkPipeline GraphicsPipeline;
+	 std::vector<VkFramebuffer> SwapChainFramebuffers;
+	 VkCommandPool CommandPool;
+	 VkCommandBuffer CommandBuffer;
 };
