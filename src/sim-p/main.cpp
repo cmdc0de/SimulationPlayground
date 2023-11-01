@@ -1,3 +1,5 @@
+
+#if 1
 #include "app.h"
 #include <iostream>
 #include <stdexcept>
@@ -13,3 +15,5 @@ int main([[maybe_unused]] int arc, [[maybe_unused]]  char *agrv[]) {
     }
 	return 0;	
 }
+
+#endif
