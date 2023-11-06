@@ -61,6 +61,8 @@ protected:
 	void createSyncObjects();
 	void recreateSwapChain();
 	void cleanupSwapChain();
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void createVertexBuffer();
 protected:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 private:
@@ -88,4 +90,6 @@ private:
 	std::vector<VkFence> InFlightFence;
 	uint32_t CurrentFrame;
 	bool FramebufferResized;
+	VkBuffer VertexBuffer;
+	VkDeviceMemory VertexBufferMemory;
 };
