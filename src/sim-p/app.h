@@ -21,6 +21,8 @@ struct SwapChainSupportDetails {
 
 class App {
 public:
+	static const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+public:
 	App();
 	void initVulkan();
 	void run();
@@ -52,11 +54,15 @@ protected:
 	void createRenderPass();
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	void createFrameBuffers();
-	void createCommandBuffer();
+	void createCommandBuffers();
 	void createCommandPool();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void drawFrame();
 	void createSyncObjects();
+	void recreateSwapChain();
+	void cleanupSwapChain();
+protected:
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 private:
 	GLFWwindow* Window;
 	VkInstance Instance;
@@ -76,8 +82,10 @@ private:
 	VkPipeline GraphicsPipeline;
 	std::vector<VkFramebuffer> SwapChainFramebuffers;
 	VkCommandPool CommandPool;
-	VkCommandBuffer CommandBuffer;
-	VkSemaphore ImageAvailableSemaphore;
-	VkSemaphore RenderFinishedSemaphore;
-	VkFence InFlightFence;
+	std::vector<VkCommandBuffer> CommandBuffer;
+	std::vector<VkSemaphore> ImageAvailableSemaphore;
+	std::vector<VkSemaphore> RenderFinishedSemaphore;
+	std::vector<VkFence> InFlightFence;
+	uint32_t CurrentFrame;
+	bool FramebufferResized;
 };
