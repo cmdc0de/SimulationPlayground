@@ -66,6 +66,11 @@ protected:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createIndexBuffer();
+	void createDescriptorSetLayout();
+	void createUniformBuffers();
+	void createDescriptorSets();
+	void createDescriptorPool();
+	void updateUniformBuffer(uint32_t currentFrame);
 protected:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 private:
@@ -97,4 +102,10 @@ private:
 	VkDeviceMemory VertexBufferMemory;
 	VkBuffer IndexBuffer;
 	VkDeviceMemory IndexBufferMemory;
+	VkDescriptorSetLayout DescriptorSetLayout;
+	std::vector<VkBuffer> UniformBuffers;
+	std::vector<VkDeviceMemory> UniformBuffersMemory;
+	std::vector<void*> UniformBuffersMapped;
+	VkDescriptorPool DescriptorPool;
+	std::vector<VkDescriptorSet> DescriptorSets;
 };
