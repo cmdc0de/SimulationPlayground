@@ -5,7 +5,13 @@ add_executable(sim-p main.cpp
 target_link_libraries(
   sim-p
   PRIVATE SimulationPlayground::SimulationPlayground_options
-          SimulationPlayground::SimulationPlayground_warnings)
+          SimulationPlayground::SimulationPlayground_warnings
+			 )
+
+target_link_libraries(
+	sim-p
+  INTERFACE stb
+	)
 
 target_link_system_libraries(
   sim-p
@@ -20,6 +26,7 @@ target_link_system_libraries(
 	  Vulkan::Headers
 	  vulkan
           glm::glm
-	  glfw)
+	  glfw
+	  )
 
 target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")

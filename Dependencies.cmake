@@ -65,6 +65,10 @@ function(SimulationPlayground_setup_dependencies)
     cpmaddpackage("gh:glfw/glfw#7482de6")
   endif()
 
+  if(NOT TARGET stb)
+    cpmaddpackage("gh:nothings/stb#03f50e343d796e492e6579a11143a085429d7f5d")
+  endif()
+
   #if (NOT TARGET spirv)
   #  cpmaddpackage(
   #	    NAME spirv
