@@ -23,10 +23,10 @@ target_link_system_libraries(
           ftxui::screen
           ftxui::dom
           ftxui::component
-	  Vulkan::Headers
-	  vulkan
-          glm::glm
-	  glfw
+			Vulkan::Headers
+			vulkan
+			glm::glm
+			glfw
 	  )
 
-target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
+  target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" "${CMAKE_BINARY_DIR}/_deps/stb-src")
