@@ -1,4 +1,5 @@
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "app.h"
 #include <cstdio>
 #include <stdexcept>
@@ -29,7 +30,7 @@ const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
 
 struct Vertex {
-	glm::vec2 pos;
+	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec2 texCoord;
 
@@ -44,7 +45,7 @@ struct Vertex {
 		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 		attributeDescriptions[1].binding = 0;
@@ -68,14 +69,20 @@ struct UniformBufferObject {
 };
 
 const std::vector<Vertex> Vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> Indices = {
-    0, 1, 2, 2, 3, 0
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4
 };
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
@@ -129,7 +136,9 @@ App::App(): Window(nullptr), Instance(0), DebugMessenger(0), PhysicalDevice(VK_N
 	, SwapChainFramebuffers(), CommandPool(0), CommandBuffer(), ImageAvailableSemaphore(), RenderFinishedSemaphore() 
 	, InFlightFence(), CurrentFrame(0), FramebufferResized(false), VertexBuffer(0), VertexBufferMemory(0), IndexBuffer(0)
 	, IndexBufferMemory(0), DescriptorSetLayout(0), UniformBuffers(),UniformBuffersMemory(), UniformBuffersMapped()
-	, DescriptorPool(0), DescriptorSets(), TextureImage(0), TextureImageMemory(0), TextureImageView(0), TextureSampler(0) {
+	, DescriptorPool(0), DescriptorSets(), TextureImage(0), TextureImageMemory(0), TextureImageView(0), TextureSampler(0)
+	, DepthImage(0), DepthImageMemory (0), DepthImageView(0) {
+
 }
 
 void App::initVulkan() {
@@ -143,8 +152,9 @@ void App::initVulkan() {
 	createRenderPass();
 	createDescriptorSetLayout();
 	createGraphicsPipeline();
-	createFrameBuffers();
 	createCommandPool();
+	createDepthResources();
+	createFrameBuffers();
 	createTextureImage();
 	createTextureImageView();
 	createTextureSampler();
@@ -155,6 +165,38 @@ void App::initVulkan() {
 	createDescriptorSets();
 	createCommandBuffers();
 	createSyncObjects();
+}
+
+bool App::hasStencilComponent(VkFormat format) {
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+VkFormat App::findDepthFormat() {
+	return findSupportedFormat(
+		{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+		VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+VkFormat App::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+	for (VkFormat format : candidates) {
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(PhysicalDevice, format, &props);
+		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+			return format;
+		} else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+			return format;
+		}
+	}
+	throw std::runtime_error("failed to find supported format!");
+}
+
+void App::createDepthResources() {
+	VkFormat depthFormat = findDepthFormat();
+	createImage(SwapChainExtent.width, SwapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, DepthImage, DepthImageMemory);
+
+	DepthImageView = createImageView(DepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+	transitionImageLayout(DepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 void App::createTextureSampler() {
@@ -185,13 +227,13 @@ void App::createTextureSampler() {
 }
 
 
-VkImageView App::createImageView(VkImage image, VkFormat format) {
+VkImageView App::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -206,7 +248,7 @@ VkImageView App::createImageView(VkImage image, VkFormat format) {
 }
 
 void App::createTextureImageView() {
-	TextureImageView = createImageView(TextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	TextureImageView = createImageView(TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void App::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
@@ -488,6 +530,17 @@ void App::transitionImageLayout(VkImage image,[[maybe_unused]] VkFormat format, 
 	barrier.subresourceRange.layerCount = 1;
 	barrier.srcAccessMask = 0; // TODO
 	barrier.dstAccessMask = 0; //TODO
+
+	if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		if (hasStencilComponent(format)) {
+			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+	} else {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
 	vkCmdPipelineBarrier( commandBuffer, 0 /* TODO */, 0 /* TODO */, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 	VkPipelineStageFlags sourceStage;
@@ -505,6 +558,12 @@ void App::transitionImageLayout(VkImage image,[[maybe_unused]] VkFormat format, 
 
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	} else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	} else {
 		throw std::invalid_argument("unsupported layout transition!");
 	}
@@ -566,6 +625,10 @@ uint32_t App::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properti
 }
 
 void App::cleanupSwapChain() {
+	vkDestroyImageView(SelectedDevice, DepthImageView, nullptr);
+	vkDestroyImage(SelectedDevice, DepthImage, nullptr);
+	vkFreeMemory(SelectedDevice, DepthImageMemory, nullptr);
+
 	for (size_t i = 0; i < SwapChainFramebuffers.size(); i++) {
         vkDestroyFramebuffer(SelectedDevice, SwapChainFramebuffers[i], nullptr);
     }
@@ -590,6 +653,7 @@ void App::recreateSwapChain() {
 
 	createSwapChain();
 	createImageViews();
+	createDepthResources();
 	createFrameBuffers();
 }
 
@@ -628,9 +692,12 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent = SwapChainExtent;
 
-	VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clearValues[1].depthStencil = {1.0f, 0};
+
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -698,15 +765,17 @@ void App::createCommandPool() {
 void App::createFrameBuffers() {
 	SwapChainFramebuffers.resize(SwapChainImageViews.size());
 	for (size_t i = 0; i < SwapChainImageViews.size(); i++) {
-		VkImageView attachments[] = {
-			SwapChainImageViews[i]
+
+		std::array<VkImageView, 2> attachments = {
+			SwapChainImageViews[i],
+			DepthImageView
 		};
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = RenderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = SwapChainExtent.width;
 		framebufferInfo.height = SwapChainExtent.height;
 		framebufferInfo.layers = 1;
@@ -732,17 +801,43 @@ void App::createRenderPass() {
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	VkAttachmentDescription depthAttachment{};
+	depthAttachment.format = findDepthFormat();
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthAttachmentRef{};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 	VkSubpassDescription subpass{};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
+	VkSubpassDependency dependency{};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+	std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
 	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassInfo.pAttachments = attachments.data();
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
 
 	if (vkCreateRenderPass(SelectedDevice, &renderPassInfo, nullptr, &RenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
@@ -754,7 +849,7 @@ void App::createImageViews() {
 	SwapChainImageViews.resize(SwapChainImages.size());
 
 	for (uint32_t i = 0; i < SwapChainImages.size(); i++) {
-		SwapChainImageViews[i] = createImageView(SwapChainImages[i], SwapChainImageFormat);
+		SwapChainImageViews[i] = createImageView(SwapChainImages[i], SwapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 }
 
@@ -949,6 +1044,18 @@ void App::createGraphicsPipeline() {
 			if (vkCreatePipelineLayout(SelectedDevice, &pipelineLayoutInfo, nullptr, &PipelineLayout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create pipeline layout!");
 			}
+
+			VkPipelineDepthStencilStateCreateInfo depthStencil{};
+			depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			depthStencil.depthTestEnable = VK_TRUE;
+			depthStencil.depthWriteEnable = VK_TRUE;
+			depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+			depthStencil.depthBoundsTestEnable = VK_FALSE;
+			depthStencil.minDepthBounds = 0.0f; // Optional
+			depthStencil.maxDepthBounds = 1.0f; // Optional
+			depthStencil.stencilTestEnable = VK_FALSE;
+			depthStencil.front = {}; // Optional
+			depthStencil.back = {}; // Optional
 			
 			VkGraphicsPipelineCreateInfo pipelineInfo{};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -965,8 +1072,10 @@ void App::createGraphicsPipeline() {
 			pipelineInfo.renderPass = RenderPass;
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+			pipelineInfo.pDepthStencilState = &depthStencil;
 
-			if (vkCreateGraphicsPipelines(SelectedDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &GraphicsPipeline) != VK_SUCCESS) {
+
+			if (vkCreateGraphicsPipelines(SelectedDevice,VK_NULL_HANDLE,1,&pipelineInfo, nullptr,&GraphicsPipeline)!= VK_SUCCESS) {
 				throw std::runtime_error("failed to create graphics pipeline!");
 			}
 
@@ -992,8 +1101,18 @@ void App::createLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 	
+	//VkPhysicalDeviceSynchronization2Features sync2{};
+	//memset(&sync2,0,sizeof(sync2));
+	//sync2.synchronization2 = VK_TRUE;
+
+	//VkPhysicalDeviceFeatures2 deviceFeatures2{};
+	//deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	//deviceFeatures2.pNext = &sync2;
+	//deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	
 	
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -1001,6 +1120,7 @@ void App::createLogicalDevice() {
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.pEnabledFeatures = &deviceFeatures;
+	//createInfo.pEnabledFeatures = &deviceFeatures2.features;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
@@ -1010,6 +1130,8 @@ void App::createLogicalDevice() {
 	} else {
 		createInfo.enabledLayerCount = 0;
 	}
+	//createInfo.pNext = &deviceFeatures2;
+
 	if (vkCreateDevice(PhysicalDevice, &createInfo, nullptr, &SelectedDevice) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create logical device!");
 	}

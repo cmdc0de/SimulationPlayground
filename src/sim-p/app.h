@@ -79,8 +79,12 @@ protected:
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void createTextureImageView();
-	VkImageView createImageView(VkImage image, VkFormat format);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 	void createTextureSampler();
+	void createDepthResources();
+	bool hasStencilComponent(VkFormat format);
+	VkFormat findDepthFormat();
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 protected:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 private:
@@ -122,4 +126,7 @@ private:
 	VkDeviceMemory TextureImageMemory;
 	VkImageView TextureImageView;
 	VkSampler TextureSampler;
+	VkImage DepthImage;
+	VkDeviceMemory DepthImageMemory;
+	VkImageView DepthImageView;
 };
