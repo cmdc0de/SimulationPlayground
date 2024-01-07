@@ -919,7 +919,7 @@ void App::createInstance() {
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "bdcacb";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.apiVersion = VK_API_VERSION_1_3;
 
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -1101,17 +1101,17 @@ void App::createLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 	
-	//VkPhysicalDeviceSynchronization2Features sync2{};
-	//memset(&sync2,0,sizeof(sync2));
-	//sync2.synchronization2 = VK_TRUE;
+	VkPhysicalDeviceSynchronization2Features sync2{};
+	sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+	sync2.synchronization2 = VK_TRUE;
 
-	//VkPhysicalDeviceFeatures2 deviceFeatures2{};
-	//deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	//deviceFeatures2.pNext = &sync2;
-	//deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+	VkPhysicalDeviceFeatures2 deviceFeatures2{};
+	deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	deviceFeatures2.pNext = &sync2;
+	deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
 
-	VkPhysicalDeviceFeatures deviceFeatures{};
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	//VkPhysicalDeviceFeatures deviceFeatures{};
+	//deviceFeatures.samplerAnisotropy = VK_TRUE;
 	
 	
 	VkDeviceCreateInfo createInfo{};
@@ -1119,8 +1119,8 @@ void App::createLogicalDevice() {
 
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.pEnabledFeatures = &deviceFeatures;
-	//createInfo.pEnabledFeatures = &deviceFeatures2.features;
+	//createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.pEnabledFeatures = nullptr;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
@@ -1130,7 +1130,7 @@ void App::createLogicalDevice() {
 	} else {
 		createInfo.enabledLayerCount = 0;
 	}
-	//createInfo.pNext = &deviceFeatures2;
+	createInfo.pNext = &deviceFeatures2;
 
 	if (vkCreateDevice(PhysicalDevice, &createInfo, nullptr, &SelectedDevice) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create logical device!");
