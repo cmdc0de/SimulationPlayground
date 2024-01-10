@@ -10,7 +10,9 @@ target_link_libraries(
 
 target_link_libraries(
 	sim-p
-  INTERFACE stb
+  INTERFACE 
+  stb
+  tinyobj
 	)
 
 target_link_system_libraries(
@@ -29,4 +31,5 @@ target_link_system_libraries(
 			glfw
 	  )
 
-  target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" "${CMAKE_BINARY_DIR}/_deps/stb-src")
+target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" "${CMAKE_BINARY_DIR}/_deps/stb-src"
+	"${CMAKE_BINARY_DIR}/_deps/tinyobjloader-src")

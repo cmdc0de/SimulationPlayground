@@ -85,6 +85,7 @@ protected:
 	bool hasStencilComponent(VkFormat format);
 	VkFormat findDepthFormat();
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	void loadModel();
 protected:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 private:

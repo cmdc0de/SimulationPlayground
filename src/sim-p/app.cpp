@@ -1,6 +1,21 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define TINYOBJLOADER_IMPLEMENTATION
+#define GLM_ENABLE_EXPERIMENTAL
 #include "app.h"
+
+#define OBJ_LOAD
+#ifdef OBJ_LOAD
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#include <tiny_obj_loader.h>
+#pragma GCC diagnostic pop
+#endif
+
 #include <cstdio>
 #include <stdexcept>
 #include <iostream>
@@ -13,6 +28,8 @@
 #include "utils.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/hash.hpp>
+#include <unordered_map>
 #define STB_IMAGE_IMPLEMENTATION
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -28,6 +45,10 @@
 
 const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
+
+static const std::string MODEL_PATH = "models/viking_room.obj";
+static const std::string TEXTURE_PATH = "textures/viking_room.png";
+
 
 struct Vertex {
 	glm::vec3 pos;
@@ -60,6 +81,9 @@ struct Vertex {
 
 		return attributeDescriptions;
 	}
+	bool operator==(const Vertex& other) const {
+		return pos == other.pos && color == other.color && texCoord == other.texCoord;
+	}
 };
 
 struct UniformBufferObject {
@@ -68,6 +92,24 @@ struct UniformBufferObject {
 	glm::mat4 proj;
 };
 
+
+#ifdef OBJ_LOAD
+std::vector<Vertex> Vertices;
+std::vector<uint32_t> Indices;
+VkBuffer VertexBuffer = 0;
+VkDeviceMemory VertexBufferMemory=0;
+
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.pos) ^
+                   (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                   (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
+
+#else
 const std::vector<Vertex> Vertices = {
     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
@@ -84,6 +126,7 @@ const std::vector<uint16_t> Indices = {
     0, 1, 2, 2, 3, 0,
     4, 5, 6, 6, 7, 4
 };
+#endif
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
 		, [[maybe_unused]]VkDebugUtilsMessageTypeFlagsEXT messageType
@@ -158,6 +201,7 @@ void App::initVulkan() {
 	createTextureImage();
 	createTextureImageView();
 	createTextureSampler();
+	loadModel();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -165,6 +209,45 @@ void App::initVulkan() {
 	createDescriptorSets();
 	createCommandBuffers();
 	createSyncObjects();
+}
+
+void App::loadModel() {
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+		throw std::runtime_error(warn + err);
+	}
+
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+	for (const auto& shape : shapes) {
+		for (const auto& index : shape.mesh.indices) {
+			Vertex vertex{};
+
+			vertex.pos = {
+				attrib.vertices[static_cast<std::vector<float>::size_type>(3 * index.vertex_index + 0)],
+				attrib.vertices[static_cast<std::vector<float>::size_type>(3 * index.vertex_index + 1)],
+				attrib.vertices[static_cast<std::vector<float>::size_type>(3 * index.vertex_index + 2)]
+			};
+
+			vertex.texCoord = {
+				attrib.texcoords[static_cast<std::vector<float>::size_type>(2 * index.texcoord_index + 0)],
+				1.0f - attrib.texcoords[static_cast<std::vector<float>::size_type>(2 * index.texcoord_index + 1)]
+			};
+
+			vertex.color = {1.0f, 1.0f, 1.0f};
+
+			if (uniqueVertices.count(vertex) == 0) {
+				uniqueVertices[vertex] = static_cast<uint32_t>(Vertices.size());
+				Vertices.push_back(vertex);
+			}
+
+			Indices.push_back(uniqueVertices[vertex]);
+		}
+	}
 }
 
 bool App::hasStencilComponent(VkFormat format) {
@@ -288,7 +371,11 @@ void App::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageT
 
 void App::createTextureImage() {
 	int textWidth, textHeight, texChannels;
+#ifdef OBJ_LOAD
+	stbi_uc * pixels = stbi_load(TEXTURE_PATH.c_str(), &textWidth, &textHeight, &texChannels, STBI_rgb_alpha);
+#else
 	stbi_uc * pixels = stbi_load("textures/dragon.jpg", &textWidth, &textHeight, &texChannels, STBI_rgb_alpha);
+#endif
 	VkDeviceSize imageSize = static_cast<uint32_t>(textWidth) * static_cast<uint32_t>(textHeight) * 4UL;
 	if(!pixels) {
 		throw std::runtime_error("failed to load texture image");
@@ -721,7 +808,11 @@ void App::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex
 	VkBuffer vertexBuffers[] = {VertexBuffer};
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+#ifdef OBJ_LOAD
+	vkCmdBindIndexBuffer(commandBuffer, IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+#else
 	vkCmdBindIndexBuffer(commandBuffer, IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+#endif
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, PipelineLayout, 0, 1
 			, &DescriptorSets[CurrentFrame], 0, nullptr);
