@@ -63,6 +63,8 @@ jobs:
       with:
         envFile: '.github/constants.env'
 
+    - name: Install build deps
+      run: sudo apt install -y libxrandr-dev
 
     - name: Setup Cpp
       uses: aminya/setup-cpp@v1
