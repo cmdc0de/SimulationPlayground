@@ -44,7 +44,6 @@ jobs:
           - Debug
         packaging_maintainer_mode:
           - ON
-          #- OFF
         build_shared:
           - OFF
 
