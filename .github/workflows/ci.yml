@@ -43,8 +43,8 @@ jobs:
           - Release
           - Debug
         packaging_maintainer_mode:
-          #- ON
-          - OFF
+          - ON
+          #- OFF
         build_shared:
           - OFF
 
