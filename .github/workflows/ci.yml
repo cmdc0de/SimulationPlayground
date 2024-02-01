@@ -28,8 +28,8 @@ jobs:
       # Disable/enable builds in this list to meet the above recommendations
       # and your own projects needs
       matrix:
-        os:
-          - ubuntu-22.04
+        #os:
+          #- ubuntu-22.04
           #- windows-2019
           #- macos-10.15
         compiler:
