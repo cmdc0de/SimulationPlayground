@@ -37,14 +37,14 @@ jobs:
           #- llvm-15.0.2
           - gcc-11
         generator:
-       #   - "Ninja Multi-Config"
+          - "Ninja Multi-Config"
           - "Unix Makefiles"
         build_type:
           - Release
           - Debug
         packaging_maintainer_mode:
           - ON
-          #- OFF
+          - OFF
         build_shared:
           - OFF
 
@@ -192,11 +192,11 @@ jobs:
           ctest -C ${{matrix.build_type}}
           gcovr -j ${{env.nproc}} --delete --root ../ --print-summary --xml-pretty --xml coverage.xml . --gcov-executable '${{ matrix.gcov_executable }}'
 
-      - name: Windows - Test and coverage
-        if: runner.os == 'Windows'
-        working-directory: ./build
-        run: |
-          OpenCppCoverage.exe --export_type cobertura:coverage.xml --cover_children -- ctest -C ${{matrix.build_type}}
+      #- name: Windows - Test and coverage
+      #  if: runner.os == 'Windows'
+      #  working-directory: ./build
+      #  run: |
+      #    OpenCppCoverage.exe --export_type cobertura:coverage.xml --cover_children -- ctest -C ${{matrix.build_type}}
 
       - name: CPack
         if: matrix.package_generator != ''
