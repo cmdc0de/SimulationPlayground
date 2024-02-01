@@ -42,8 +42,9 @@ jobs:
         build_type:
           - Release
           - Debug
-        packaging_maintainer_mode:
-          - ON
+        #packaging_maintainer_mode:
+        #  - ON
+        #  - OFF
         build_shared:
           - OFF
 
@@ -57,6 +58,7 @@ jobs:
           # if you try to use a compiler that does not have gcov set
           - compiler: gcc-11
             gcov_executable: gcov
+            packaging_maintainer_mode: ON
             enable_ipo: On
 
           #- compiler: llvm-15.0.2
