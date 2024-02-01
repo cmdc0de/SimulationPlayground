@@ -149,8 +149,11 @@ jobs:
           envFile: '.github/constants.env'
 
       - name: Install build deps linux
-        #if: runner.os == 'ubuntu-22.04'
-        run: sudo apt install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+        if: runner.os != 'Windows'
+        run: |
+          echo `uname -a`
+          echo " ${{ runner.os }}"
+          sudo apt install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
 
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
