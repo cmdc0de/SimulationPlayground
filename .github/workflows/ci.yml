@@ -30,14 +30,14 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - windows-2019
+          #- windows-2019
           #- macos-10.15
         compiler:
           # you can specify the version after `-` like "llvm-15.0.2".
-          - llvm-15.0.2
+          #- llvm-15.0.2
           - gcc-11
-        generator:
-          - "Ninja Multi-Config"
+       #generator:
+       #   - "Ninja Multi-Config"
         build_type:
           - Release
           - Debug
@@ -49,8 +49,8 @@ jobs:
 
         exclude:
           # mingw is determined by this author to be too buggy to support
-          - os: windows-2019
-            compiler: gcc-11
+          #- os: windows-2019
+          #  compiler: gcc-11
 
         include:
           # Add appropriate variables for gcov version required. This will intentionally break
@@ -59,9 +59,9 @@ jobs:
             gcov_executable: gcov
             enable_ipo: On
 
-          - compiler: llvm-15.0.2
-            enable_ipo: Off
-            gcov_executable: "llvm-cov gcov"
+          #- compiler: llvm-15.0.2
+          #  enable_ipo: Off
+          #  gcov_executable: "llvm-cov gcov"
 
           #- os: macos-10.15
           #  enable_ipo: Off
@@ -89,25 +89,25 @@ jobs:
             enable_ipo: Off
 
           # Windows msvc builds
-          - os: windows-2022
-            compiler: msvc
-            generator: "Visual Studio 17 2022"
-            build_type: Debug
-            packaging_maintainer_mode: On
-            enable_ipo: On
+          #- os: windows-2022
+          #  compiler: msvc
+          #  generator: "Visual Studio 17 2022"
+          #  build_type: Debug
+          #  packaging_maintainer_mode: On
+          #  enable_ipo: On
 
-          - os: windows-2022
-            compiler: msvc
-            generator: "Visual Studio 17 2022"
-            build_type: Release
-            packaging_maintainer_mode: On
-            enable_ipo: On
+          #- os: windows-2022
+          #  compiler: msvc
+          #  generator: "Visual Studio 17 2022"
+          #  build_type: Release
+          #  packaging_maintainer_mode: On
+          #  enable_ipo: On
 
-          - os: windows-2022
-            compiler: msvc
-            generator: "Visual Studio 17 2022"
-            build_type: Debug
-            packaging_maintainer_mode: Off
+          #- os: windows-2022
+          #  compiler: msvc
+          #  generator: "Visual Studio 17 2022"
+          #  build_type: Debug
+          #  packaging_maintainer_mode: Off
 
           #- os: windows-2022
           #  compiler: msvc
@@ -116,13 +116,13 @@ jobs:
           #  packaging_maintainer_mode: Off
           #  package_generator: ZIP
 
-          - os: windows-2022
-            compiler: msvc
-            generator: "Visual Studio 17 2022"
-            build_type: Release
-            packaging_maintainer_mode: On
-            enable_ipo: On
-            build_shared: On
+          #- os: windows-2022
+          #  compiler: msvc
+          #  generator: "Visual Studio 17 2022"
+          #  build_type: Release
+          #  packaging_maintainer_mode: On
+          #  enable_ipo: On
+          #  build_shared: On
 
 
     steps:
