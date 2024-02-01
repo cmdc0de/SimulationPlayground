@@ -1,9 +1,19 @@
-add_executable(sim-p main.cpp)
+add_executable(sim-p main.cpp 
+	app.cpp
+	utils.cpp)
 
 target_link_libraries(
   sim-p
   PRIVATE SimulationPlayground::SimulationPlayground_options
-          SimulationPlayground::SimulationPlayground_warnings)
+          SimulationPlayground::SimulationPlayground_warnings
+			 )
+
+target_link_libraries(
+	sim-p
+  INTERFACE 
+  stb
+  tinyobj
+	)
 
 target_link_system_libraries(
   sim-p
@@ -15,6 +25,11 @@ target_link_system_libraries(
           ftxui::screen
           ftxui::dom
           ftxui::component
-          glm::glm)
+			Vulkan::Headers
+			vulkan
+			glm::glm
+			glfw
+	  )
 
-target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
+target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" "${CMAKE_BINARY_DIR}/_deps/stb-src"
+	"${CMAKE_BINARY_DIR}/_deps/tinyobjloader-src")
