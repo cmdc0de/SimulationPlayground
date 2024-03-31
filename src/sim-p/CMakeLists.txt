@@ -29,6 +29,8 @@ target_link_system_libraries(
 			vulkan
 			glm::glm
 			glfw
+			cmdc0de_core
+			cmd_graphics
 	  )
 
 target_include_directories(sim-p PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" "${CMAKE_BINARY_DIR}/_deps/stb-src"
