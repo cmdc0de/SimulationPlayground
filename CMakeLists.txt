@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.21)
 
+#set (CMAKE_BUILD_TYPE "RelWithDebInfo")
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+	message("Setting CMAKE Build type as not passed in to Debug")
+	set (CMAKE_BUILD_TYPE "Debug")
+endif()
+
+message (${CMAKE_BUILD_TYPE})
+
 # This template attempts to be "fetch_content"-able
 # so that it works well with tools like CPM or other
 # manual dependency management
+set(CMAKE_CXX_STANDARD 20)
 
 # Only set the cxx_standard if it is not set by someone else
 if (NOT DEFINED CMAKE_CXX_STANDARD)

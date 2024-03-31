@@ -40,8 +40,45 @@ function(SimulationPlayground_setup_dependencies)
     cpmaddpackage("gh:lefticus/tools#update_build_system")
   endif()
 
+  #  if(NOT TARGET vulkan::hpp-headers)
+  #  cpmaddpackage("gh:KhronosGroup/Vulkan-Hpp@1.3.268")
+  #endif()
+
+  if(NOT TARGET Vulkan::Headers)
+     cpmaddpackage("gh:KhronosGroup/Vulkan-Headers@1.3.268")
+  endif()
+
+  if(NOT TARGET vulkan)
+     cpmaddpackage(
+	NAME vulkan
+	GIT_REPOSITORY "https://github.com/KhronosGroup/Vulkan-Loader"
+	GIT_TAG "v1.3.268"
+	OPTIONS
+	"UPDATE_DEPS ON BUILD_STATIC_LOADER")
+  endif()
+
   if(NOT TARGET glm::glm)
     cpmaddpackage("gh:g-truc/glm#bf71a83")
   endif()
+
+  if(NOT TARGET glfw)
+    cpmaddpackage("gh:glfw/glfw#7482de6")
+  endif()
+
+  if(NOT TARGET stb)
+    cpmaddpackage("gh:nothings/stb#03f50e343d796e492e6579a11143a085429d7f5d")
+  endif()
+
+  if(NOT TARGET tinyobj)
+	  cpmaddpackage("gh:tinyobjloader/tinyobjloader@2.0.0rc10")
+  endif()
+
+  #if (NOT TARGET spirv)
+  #  cpmaddpackage(
+  #	    NAME spirv
+  #	    GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross"
+  #	    GIT_TAG "sdk-1.3.261.1"
+  #	    )
+  #endif()
 
 endfunction()
