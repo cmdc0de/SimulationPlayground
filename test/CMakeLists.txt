@@ -84,24 +84,24 @@ catch_discover_tests(
 
 # Disable the constexpr portion of the test, and build again this allows us to have an executable that we can debug when
 # things go wrong with the constexpr testing
-add_executable(relaxed_constexpr_tests constexpr_tests.cpp)
-target_link_libraries(
-  relaxed_constexpr_tests
-  PRIVATE SimulationPlayground::SimulationPlayground_warnings
-          SimulationPlayground::SimulationPlayground_options
-          SimulationPlayground::sample_library
-          Catch2::Catch2WithMain)
-target_compile_definitions(relaxed_constexpr_tests PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
+#add_executable(relaxed_constexpr_tests constexpr_tests.cpp)
+#target_link_libraries(
+#  relaxed_constexpr_tests
+#  PRIVATE SimulationPlayground::SimulationPlayground_warnings
+#          SimulationPlayground::SimulationPlayground_options
+#          SimulationPlayground::sample_library
+#          Catch2::Catch2WithMain)
+#target_compile_definitions(relaxed_constexpr_tests PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
 
-catch_discover_tests(
-  relaxed_constexpr_tests
-  TEST_PREFIX
-  "relaxed_constexpr."
-  REPORTER
-  XML
-  OUTPUT_DIR
-  .
-  OUTPUT_PREFIX
-  "relaxed_constexpr."
-  OUTPUT_SUFFIX
-  .xml)
+#catch_discover_tests(
+#  relaxed_constexpr_tests
+#  TEST_PREFIX
+#  "relaxed_constexpr."
+#  REPORTER
+#  XML
+#  OUTPUT_DIR
+#  .
+#  OUTPUT_PREFIX
+#  "relaxed_constexpr."
+#  OUTPUT_SUFFIX
+#  .xml)

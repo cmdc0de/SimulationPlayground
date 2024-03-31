@@ -37,7 +37,7 @@ jobs:
           #- llvm-15.0.2
           - gcc-11
         generator:
-          - "Ninja Multi-Config"
+          #- "Ninja Multi-Config"
           - "Unix Makefiles"
         build_type:
           - Release
@@ -162,27 +162,19 @@ jobs:
         with:
           compiler: ${{ matrix.compiler }}
           vcvarsall: ${{ contains(matrix.os, 'windows' )}}
-
           cmake: true
-          ninja: true
+          ninja: false
           vcpkg: false
           ccache: true
           clangtidy: ${{ env.CLANG_TIDY_VERSION }}
-
-
           cppcheck: true
-
           gcovr: true
           opencppcoverage: true
 
-      - name: Configure CMake
-        run: |
-          cmake -S . -B ./build -G "${{matrix.generator}}" -D${{ env.PROJECT_NAME }}_ENABLE_IPO=${{matrix.enable_ipo }} -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} -D${{ env.PROJECT_NAME }}_PACKAGING_MAINTAINER_MODE:BOOL=${{matrix.packaging_maintainer_mode}} -D${{ env.PROJECT_NAME }}_ENABLE_COVERAGE:BOOL=${{ matrix.build_type == 'Debug' }} -DGIT_SHA:STRING=${{ github.sha }}
-
-      - name: Build
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: |
-          cmake --build ./build --config ${{matrix.build_type}}
+		- name: GenerateAndBuild
+		  run: |
+			 make "${{matrix.generator}}"
+          #cmake -S . -B ./build -G "${{matrix.generator}}" -D${{ env.PROJECT_NAME }}_ENABLE_IPO=${{matrix.enable_ipo }} -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} -D${{ env.PROJECT_NAME }}_PACKAGING_MAINTAINER_MODE:BOOL=${{matrix.packaging_maintainer_mode}} -D${{ env.PROJECT_NAME }}_ENABLE_COVERAGE:BOOL=${{ matrix.build_type == 'Debug' }} -DGIT_SHA:STRING=${{ github.sha }}
 
       - name: Unix - Test and coverage
         if: runner.os != 'Windows'

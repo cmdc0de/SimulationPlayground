@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
 
 #set (CMAKE_BUILD_TYPE "RelWithDebInfo")
-set (CMAKE_BUILD_TYPE "Debug")
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+	message("Setting CMAKE Build type as not passed in to Debug")
+	set (CMAKE_BUILD_TYPE "Debug")
+endif()
 
 message (${CMAKE_BUILD_TYPE})
 
