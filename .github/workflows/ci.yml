@@ -170,7 +170,7 @@ jobs:
           cppcheck: true
           gcovr: true
           opencppcoverage: true
-	  
+
       - name: GenerateAndBuild
         run: |
           make -D${{ env.PROJECT_NAME }}_ENABLE_COVERAGE:BOOL=${{matrix.build_type == 'Debug' }} -DGIT_SHA:STRING=${{ github.sha }} ${{matrix.build_type}}_generate
