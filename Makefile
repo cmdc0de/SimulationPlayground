@@ -1,22 +1,28 @@
 all: 
 	make debug
 
-debug:
-	#generate make files
+debug_generate:
 	cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -S . -B build/debug 
+
+debug: 
 	make -C build/debug -j$(nproc)
 
-release:
+release_generate:
 	cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build/release
+
+release:
 	make -C build/release -ji$(nproc)
 
-reldeb:
+reldeb_generate:
 	cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -S . -B build/relwdebug 
+
+reldeb:
 	make -C build/relwdebug -j$(nproc)
 
-minsize:
+minsize_generate:
 	cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=MinSizeRel -S . -B build/minsize 
-	make -C build/minsize -j4
+minsize:
+	make -C build/minsize -j$(nproc)
 
 rundebug:
 	./build/debug/src/sim-p/sim-p
