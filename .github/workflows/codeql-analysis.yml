@@ -65,7 +65,6 @@ jobs:
       with:
         compiler: ${{ matrix.compiler }}
         vcvarsall: ${{ contains(matrix.os, 'windows' )}}
-
         cmake: true
         ninja: false
         vcpkg: false
